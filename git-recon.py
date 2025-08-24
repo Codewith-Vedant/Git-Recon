@@ -215,6 +215,33 @@ def get_github_tokens() -> List[str]:
     print_success(f"Loaded {len(tokens)} GitHub token(s)")
     return list(dict.fromkeys(tokens))
 
+def load_dorks(dork_file: str) -> List[str]:
+    """Load dorks from file"""
+    dork_path = Path(dork_file)
+    
+    if not dork_path.exists():
+        print_error(f"Dork file not found: {dork_file}")
+        exit(1)
+    
+    try:
+        dorks = []
+        with open(dork_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    dorks.append(line)
+        
+        if not dorks:
+            print_error(f"No dorks found in file: {dork_file}")
+            exit(1)
+        
+        print_success(f"Loaded {len(dorks)} dork(s) from {dork_file}")
+        return dorks
+    
+    except Exception as e:
+        print_error(f"Error reading dork file {dork_file}: {str(e)}")
+        exit(1)
+
 def github_search(query: str, token: str) -> List[dict]:
     """Search GitHub API with improved error handling and rate limiting"""
     headers = {"Authorization": f"token {token}"}
@@ -397,12 +424,14 @@ def improved_classification(match: str, pattern_type: str, context: dict) -> str
     return pattern_type
 
 def calculate_confidence(match: str, pattern_type: str, context: dict, source: str) -> str:
-    """Calculate confidence level of the finding"""
+    """Calculate confidence level based on impact/sensitivity score"""
     score = 50
     
+    # High impact patterns - immediate security risk
     if any(prefix in match for prefix in ['AKIA', 'AIza', 'sk_live_', 'ghp_', 'ghs_']):
         score += 40
     
+    # Variable name context scoring
     if context.get('variable_name'):
         var_name = context['variable_name'].lower()
         if any(keyword in var_name for keyword in ['api', 'key', 'secret', 'token', 'password']):
@@ -410,30 +439,34 @@ def calculate_confidence(match: str, pattern_type: str, context: dict, source: s
         elif any(keyword in var_name for keyword in ['id', 'name', 'title', 'description']):
             score -= 20
     
+    # File path context scoring
     if any(path in source.lower() for path in ['config', 'env', 'secret', 'key']):
         score += 15
     elif any(path in source.lower() for path in ['test', 'example', 'demo', 'doc']):
         score -= 25
     
+    # Entropy-based scoring
     ent = entropy(match)
     if ent > 4.5:
         score += 10
     elif ent < 3.0:
         score -= 15
     
+    # Length-based scoring
     if len(match) > 50:
         score += 5
     elif len(match) < 16:
         score -= 10
     
+    # Confidence levels based on impact/sensitivity
     if score >= 85:
-        return "HIGH"
+        return "HIGH"      # Critical impact - immediate risk
     elif score >= 65:
-        return "MEDIUM"
+        return "MEDIUM"    # Moderate impact - potential risk
     elif score >= 45:
-        return "LOW"
+        return "LOW"       # Low impact - minimal risk
     else:
-        return "VERY_LOW"
+        return "VERY_LOW"  # Negligible impact
 
 def extract_and_filter(content: str, source: str) -> List[Dict]:
     """Enhanced extraction with better filtering"""
@@ -514,7 +547,7 @@ def fetch_raw(raw_url: str) -> str:
 write_lock = threading.Lock()
 
 def process_dork(org: str, dork: str, token: str, jsonl_path: Path):
-    """Process a single dork query - FIXED to save ALL findings"""
+    """Process a single dork query"""
     print_info(f"Processing dork: {dork}")
     
     for item in github_search(f"org:{org} {dork}", token):
@@ -527,7 +560,7 @@ def process_dork(org: str, dork: str, token: str, jsonl_path: Path):
         
         findings = extract_and_filter(content, html_url)
         
-        # FIXED: Save ALL findings (including LOW confidence), not just HIGH/MEDIUM
+        # Save ALL findings (including LOW confidence)
         if findings:
             with write_lock, open(jsonl_path, "a", encoding="utf-8") as out:
                 for finding in findings:
@@ -877,34 +910,32 @@ def generate_table_html(df, confidence_level: str) -> str:
     return html
 
 def main():
-    """Main function maintaining original v1.5 CLI interface with unique filenames"""
+    """Main function with custom dork file support"""
     parser = argparse.ArgumentParser(
-        description="GitRecon v1.0 - Advanced GitHub Secret Scanner (Enhanced v1.5 compatible)",
+        description="GitRecon v1.0 - GitHub Repository Secret Scanner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 Examples:
   %(prog)s -o example-org -c ALL
-  %(prog)s -o example-org -c ALL --output results.jsonl --html custom_report.html
-  %(prog)s -o example-org -c ALL --threads 2 --max-pages 2
-  
-Output files will be automatically named:
-  - JSONL: ORG_NAME_findings.jsonl  (e.g., hngi_findings.jsonl)
-  - HTML: ORG_NAME_report.html      (e.g., hngi_report.html)
-  
-Tips:
-  - Use fewer threads (--threads 2) to avoid rate limiting
-  - Use multiple GitHub tokens for better rate limits
-  - Consider using --max-pages 2 for faster scans
+  %(prog)s -o example-org -c HIGH -f custom_dorks.txt
+  %(prog)s -o example-org -c MEDIUM --output results.jsonl --html custom_report.html
+  %(prog)s -o example-org -c LOW --threads 2 --max-pages 2
+
+Confidence/Impact Levels (-c parameter):
+  ALL     - Show all findings (HIGH, MEDIUM, LOW impact)
+  HIGH    - Show only high impact/critical secrets (score >= 85)
+  MEDIUM  - Show medium+ impact secrets (score >= 65)  
+  LOW     - Show low+ impact secrets (score >= 45)
         '''
     )
     
-    # ORIGINAL v1.5 COMPATIBLE ARGUMENTS
     parser.add_argument("-o", "--org", required=True, help="GitHub organization to scan")
-    parser.add_argument("-c", "--category", default="ALL", help="Category to scan (ALL, AWS, GITHUB, etc.) - v1.0 scans all by default")
+    parser.add_argument("-c", "--category", default="ALL", help="Secret impact/sensitivity level filter (ALL, HIGH, MEDIUM, LOW)")
+    parser.add_argument("-f", "--file", default="dorks/small.txt", help="Dork file to use (default: dorks/small.txt)")
     parser.add_argument("--output", help="Output JSONL file (default: ORG_NAME_findings.jsonl)")
     parser.add_argument("--html", help="HTML report file (default: ORG_NAME_report.html)")
-    parser.add_argument("--threads", "-t", type=int, default=4, help="Number of threads (default: 4, reduced to avoid rate limits)")
-    parser.add_argument("--max-pages", "-p", type=int, default=3, help="Maximum pages per query (default: 3, reduced to avoid rate limits)")
+    parser.add_argument("--threads", "-t", type=int, default=4, help="Number of threads (default: 4)")
+    parser.add_argument("--max-pages", "-p", type=int, default=3, help="Maximum pages per query (default: 3)")
     
     args = parser.parse_args()
     
@@ -927,23 +958,17 @@ Tips:
     
     setup_logging()
     tokens = get_github_tokens()
+    dorks = load_dorks(args.file)
     
     print_info(f"Target organization: {args.org}")
-    print_info(f"Category: {args.category} (v1.0 scans all patterns)")
+    print_info(f"Impact/Sensitivity filter: {args.category}")
+    print_info(f"Dork file: {args.file}")
     print_info(f"Using {MAX_THREADS} threads, {MAX_PAGES} pages per query")
     print_info(f"Results will be saved to: {args.output}")
     print_info(f"HTML report will be saved to: {args.html}")
     
     if MAX_THREADS > 4:
         print_warning("High thread count may cause rate limiting. Consider using --threads 2-4")
-    
-    dorks = [
-        'filename:.env', 'filename:config.json', 'filename:secrets.json',
-        'filename:credentials', 'filename:.aws', 'filename:.ssh',
-        '"api_key"', '"secret_key"', '"access_token"', '"private_key"',
-        '"password"', '"jwt"', '"bearer"', 'AKIA', 'AIza',
-        'sk_live_', 'pk_live_', 'ghp_', 'ghs_', 'xoxb-', 'xoxa-'
-    ]
     
     jsonl_path = Path(args.output)
     html_path = Path(args.html)
@@ -974,11 +999,11 @@ Tips:
     
     if stats['total_findings'] > 0:
         if stats['high_confidence'] > 0:
-            print_error(f"⚠️  CRITICAL: Found {stats['high_confidence']} high-confidence secrets!")
+            print_error(f"⚠️  CRITICAL: Found {stats['high_confidence']} high-impact secrets!")
         elif stats['medium_confidence'] > 0:
-            print_warning(f"Found {stats['medium_confidence']} medium-confidence potential secrets")
+            print_warning(f"Found {stats['medium_confidence']} medium-impact potential secrets")
         else:
-            print_info(f"Found {stats['total_findings']} low-confidence potential secrets")
+            print_info(f"Found {stats['total_findings']} low-impact potential secrets")
         
         print_success(f"Detailed report available at: {args.html}")
     else:
