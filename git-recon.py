@@ -427,7 +427,7 @@ def calculate_confidence(match: str, pattern_type: str, context: dict, source: s
     """Calculate confidence level based on impact/sensitivity score"""
     score = 50
     
-    # High impact patterns - immediate security risk
+    # High impact patterns
     if any(prefix in match for prefix in ['AKIA', 'AIza', 'sk_live_', 'ghp_', 'ghs_']):
         score += 40
     
@@ -458,15 +458,15 @@ def calculate_confidence(match: str, pattern_type: str, context: dict, source: s
     elif len(match) < 16:
         score -= 10
     
-    # Confidence levels based on impact/sensitivity
+    # Confidence levels 
     if score >= 85:
-        return "HIGH"      # Critical impact - immediate risk
+        return "HIGH"      
     elif score >= 65:
-        return "MEDIUM"    # Moderate impact - potential risk
+        return "MEDIUM"    
     elif score >= 45:
-        return "LOW"       # Low impact - minimal risk
+        return "LOW"       
     else:
-        return "VERY_LOW"  # Negligible impact
+        return "VERY_LOW"  
 
 def extract_and_filter(content: str, source: str) -> List[Dict]:
     """Enhanced extraction with better filtering"""
@@ -812,15 +812,15 @@ def generate_html_report(jsonl_path: Path, html_path: Path, org: str):
             </div>
             <div class="stat-card">
                 <div class="stat-number high">{len(high_conf)}</div>
-                <div class="stat-label">High Risk</div>
+                <div class="stat-label">High Confidence</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number medium">{len(medium_conf)}</div>
-                <div class="stat-label">Medium Risk</div>
+                <div class="stat-label">Medium Confidence</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number low">{len(low_conf)}</div>
-                <div class="stat-label">Low Risk</div>
+                <div class="stat-label">Low Confidence</div>
             </div>
         </div>
 '''
@@ -828,7 +828,7 @@ def generate_html_report(jsonl_path: Path, html_path: Path, org: str):
     if len(high_conf) > 0:
         html_content += f'''
         <div class="section">
-            <h2>🚨 High Risk Findings ({len(high_conf)})</h2>
+            <h2>🚨 High Confidence Findings ({len(high_conf)})</h2>
             {generate_table_html(high_conf, 'high')}
         </div>
         '''
@@ -836,7 +836,7 @@ def generate_html_report(jsonl_path: Path, html_path: Path, org: str):
     if len(medium_conf) > 0:
         html_content += f'''
         <div class="section">
-            <h2>⚠️ Medium Risk Findings ({len(medium_conf)})</h2>
+            <h2>⚠️ Medium Confidence Findings ({len(medium_conf)})</h2>
             {generate_table_html(medium_conf, 'medium')}
         </div>
         '''
@@ -844,7 +844,7 @@ def generate_html_report(jsonl_path: Path, html_path: Path, org: str):
     if len(low_conf) > 0:
         html_content += f'''
         <div class="section">
-            <h2>🔍 Low Risk Findings ({len(low_conf)})</h2>
+            <h2>🔍 Low Confidence Findings ({len(low_conf)})</h2>
             {generate_table_html(low_conf, 'low')}
         </div>
         '''

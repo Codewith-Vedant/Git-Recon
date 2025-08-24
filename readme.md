@@ -14,14 +14,8 @@ GitRecon v1.0 is a powerful security reconnaissance tool designed to detect expo
 ### 🔍 **Comprehensive Secret Detection**
 - **22+ Secret Patterns**: AWS keys, GitHub tokens, Stripe keys, Google API keys, JWT tokens, private keys, database URLs
 - **Smart Pattern Matching**: Context-aware detection with variable name analysis
-- **Impact-Based Scoring**: HIGH/MEDIUM/LOW confidence levels based on security risk assessment
+- **Impact-Based Scoring**: HIGH/MEDIUM/LOW confidence levels
 - **Advanced Filtering**: Entropy analysis, false positive reduction, and legitimate keyword filtering
-
-### 🎯 **Impact-Based Analysis**
-- **HIGH Impact (85+ score)**: Critical secrets with immediate security risk (AKIA*, live tokens)
-- **MEDIUM Impact (65-84)**: Moderate risk secrets requiring attention
-- **LOW Impact (45-64)**: Minimal risk findings for completeness
-- **Configurable Sensitivity**: Filter results by impact level using `-c` parameter
 
 ### 🎨 **Professional Interface**
 - **Colorful CLI Output**: Timestamped messages with emojis and color-coded findings
@@ -337,8 +331,8 @@ ghp_zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 ### Custom Dork Files
 ```bash
 # Use different dork sets for different scan types
-python git-recon-proper.py -o target-org -c HIGH -f dorks/critical.txt
-python git-recon-proper.py -o target-org -c ALL -f dorks/comprehensive.txt
+python git-recon-proper.py -o target-org -c HIGH -f dorks/medium.txt
+python git-recon-proper.py -o target-org -c ALL -f dorks/All-dorks.txt
 ```
 
 ---
@@ -352,7 +346,7 @@ python git-recon-proper.py -o company-name -c HIGH -f dorks/critical.txt --threa
 
 ### Comprehensive Analysis (All Findings)
 ```bash
-python git-recon-proper.py -o company-name -c ALL -f dorks/small.txt --threads 4 --max-pages 4
+python git-recon-proper.py -o company-name -c ALL -f dorks/medium.txt --threads 4 --max-pages 4
 ```
 
 ### Fast Scan (Limited Scope)
@@ -451,7 +445,6 @@ pip install -r requirements.txt
 ## 📝 Changelog
 
 ### v1.0.0 (Current)
-- ✨ **Impact-Based Confidence Scoring**: HIGH/MEDIUM/LOW based on security risk
 - ✨ **Custom Dork File Support**: Load patterns from external files (`-f` option)
 - ✨ **Professional HTML Reports**: Modern responsive design with statistics
 - ✨ **Advanced Pattern Detection**: 22+ secret types with context analysis
@@ -466,24 +459,7 @@ pip install -r requirements.txt
 
 ## 👥 Authors & Acknowledgments
 
-- **Lead Developer**: [Your Name](https://github.com/yourusername)
-- **Contributors**: See [CONTRIBUTORS.md](CONTRIBUTORS.md) for a full list
-
-### Special Thanks
-- GitHub API team for excellent documentation
-- Security research community for pattern identification
-- Open source contributors for Python ecosystem libraries
-- Penetration testing community for feedback and suggestions
-
----
-
-## 📞 Support & Community
-
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yourusername/gitrecon/issues)
-- 📖 **Documentation**: [Wiki](https://github.com/yourusername/gitrecon/wiki)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/yourusername/gitrecon/discussions)
-- 🔒 **Security Issues**: security@yourproject.com
-- 📧 **General Contact**: contact@yourproject.com
+- **Lead Developer**: [Vedant Pillai aka Titan-Hack](https://github.com/Codewith-Vedant)
 
 ---
 
