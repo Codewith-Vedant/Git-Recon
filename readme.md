@@ -3,9 +3,9 @@
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![Security Scanner](https://img.shields.io/badge/tool-security--scanner-red.svg)](https://github.com/Codewith-Vedant/Git-Recon)
 
-**Advanced GitHub Repository Secret Scanner with Impact-Based Analysis**
+**Advanced GitHub Repository Secret Scanner**
 
-GitRecon v1.0 is a powerful security reconnaissance tool designed to detect exposed secrets, API keys, tokens, passwords, and sensitive information in GitHub organization repositories. Features intelligent impact scoring, custom dork support, and professional HTML reporting.
+GitRecon v1.0 is a powerful security reconnaissance tool designed to detect exposed secrets, API keys, tokens, passwords, and sensitive information in GitHub organization repositories. Features intelligent scoring, custom dork support, and professional HTML reporting. The scoring helps users understand whether the secret found is a real secret or not.
 
 ---
 
@@ -14,7 +14,7 @@ GitRecon v1.0 is a powerful security reconnaissance tool designed to detect expo
 ### 🔍 **Comprehensive Secret Detection**
 - **22+ Secret Patterns**: AWS keys, GitHub tokens, Stripe keys, Google API keys, JWT tokens, private keys, database URLs
 - **Smart Pattern Matching**: Context-aware detection with variable name analysis
-- **Impact-Based Scoring**: HIGH/MEDIUM/LOW confidence levels
+- **Confidence Scoring**: HIGH/MEDIUM/LOW confidence levels
 - **Advanced Filtering**: Entropy analysis, false positive reduction, and legitimate keyword filtering
 
 ### 🎨 **Professional Interface**
